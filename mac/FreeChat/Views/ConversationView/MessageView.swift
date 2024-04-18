@@ -21,7 +21,8 @@ struct MessageView: View {
   @State var showInfoPopover = false
   @State var isHover = false
   @State var animateDots = false
-
+  @State private var isFormattingDisabled: Bool = false
+  
   @AppStorage("showFeedbackButtons") private var showFeedbackButtons = true
 
   init(_ m: Message, overrideText: String = "", agentStatus: Agent.Status?) {
@@ -94,6 +95,8 @@ struct MessageView: View {
 
     return HStack(alignment: .center, spacing: 4) {
       infoText
+      ToggleFormattingButton(active: $isFormattingDisabled)
+        .opacity(showButtons ? 1 : 0)
       if processing {
         Button(action: {
           Task {
@@ -116,9 +119,9 @@ struct MessageView: View {
           .background(.primary.opacity(0.00001)) // needed to be clickable
       })
         .menuStyle(.circle)
-        .popover(isPresented: $showInfoPopover) {
-        Text(info).padding(12).font(.caption).textSelection(.enabled)
-      }
+          .popover(isPresented: $showInfoPopover) {
+          Text(info).padding(12).font(.caption).textSelection(.enabled)
+        }
         .opacity(showButtons ? 1 : 0)
         .disabled(!overrideText.isEmpty)
         .padding(0)
@@ -195,15 +198,14 @@ struct MessageView: View {
       VStack(alignment: .leading, spacing: 1) {
         infoLine
         Group {
-          if m.fromId == Message.USER_SPEAKER_ID {
-            Text(messageText)
+          if m.fromId == Message.USER_SPEAKER_ID || isFormattingDisabled {
+            Text(messageText).textSelection(.enabled)
           } else {
             Markdown(messageText)
               .markdownTheme(.freeChat)
               .markdownCodeSyntaxHighlighter(.splash(theme: self.theme))
           }
         }
-        .textSelection(.enabled)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .transition(.identity)
       }
